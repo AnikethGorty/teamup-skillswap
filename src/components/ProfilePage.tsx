@@ -29,9 +29,9 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 const profileSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   skills: z.array(z.string()).optional(),
-  collegeid: z.string().uuid().optional(),
+  collegeName: z.string().trim().max(200, "College name must be less than 200 characters").optional(),
 });
 
 export function ProfilePage() {
@@ -40,39 +40,19 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const [colleges, setColleges] = useState<any[]>([]);
+  const [collegeName, setCollegeName] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     skills: [] as string[],
-    collegeid: "",
+    collegeName: "",
   });
   const [newSkill, setNewSkill] = useState("");
 
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchColleges();
     }
   }, [user]);
-
-  const fetchColleges = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('colleges')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setColleges(data || []);
-    } catch (error) {
-      console.error('Error fetching colleges:', error);
-      toast({
-        title: "Error",
-        description: "Could not load colleges",
-        variant: "destructive",
-      });
-    }
-  };
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -80,7 +60,7 @@ export function ProfilePage() {
     try {
       const { data, error } = await supabase
         .from('studentdetails')
-        .select('*')
+        .select('*, college:colleges(name)')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -88,10 +68,12 @@ export function ProfilePage() {
 
       if (data) {
         setProfile(data);
+        const collegeNameValue = (data.college as any)?.name || "";
+        setCollegeName(collegeNameValue);
         setFormData({
           name: data.name || "",
-          skills: [], // skills not in studentdetails schema
-          collegeid: data.college_id || "",
+          skills: [],
+          collegeName: collegeNameValue,
         });
       }
     } catch (error) {
@@ -120,11 +102,39 @@ export function ProfilePage() {
 
       setLoading(true);
 
+      let collegeId = null;
+
+      // Find or create college if name provided
+      if (formData.collegeName && formData.collegeName.trim()) {
+        const trimmedCollegeName = formData.collegeName.trim();
+        
+        // Check if college already exists (case-insensitive)
+        const { data: existingCollege } = await supabase
+          .from('colleges')
+          .select('id')
+          .ilike('name', trimmedCollegeName)
+          .maybeSingle();
+
+        if (existingCollege) {
+          collegeId = existingCollege.id;
+        } else {
+          // Create new college
+          const { data: newCollege, error: collegeError } = await supabase
+            .from('colleges')
+            .insert({ name: trimmedCollegeName })
+            .select('id')
+            .single();
+
+          if (collegeError) throw collegeError;
+          collegeId = newCollege.id;
+        }
+      }
+
       const profileData = {
         user_id: user.id,
-        name: formData.name,
+        name: formData.name.trim(),
         email: user.email || "",
-        college_id: formData.collegeid || null,
+        college_id: collegeId,
       };
 
       if (profile) {
@@ -244,32 +254,25 @@ export function ProfilePage() {
             <div className="flex-1 space-y-6">
               {isEditing && (
                 <div className="space-y-2">
-                  <Label htmlFor="college">College</Label>
-                  <Select
-                    value={formData.collegeid}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, collegeid: value }))}
-                  >
-                    <SelectTrigger id="college" className="w-full">
-                      <SelectValue placeholder="Select your college" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colleges.map((college) => (
-                        <SelectItem key={college.collegeid} value={college.collegeid}>
-                          {college.name} - {college.city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="college">College Name</Label>
+                  <Input
+                    id="college"
+                    value={formData.collegeName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, collegeName: e.target.value }))}
+                    placeholder="Enter your college name"
+                    maxLength={200}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Type the name of your college
+                  </p>
                 </div>
               )}
               
-              {!isEditing && profile?.collegeid && (
+              {!isEditing && collegeName && (
                 <div>
                   <h3 className="text-lg font-semibold mb-2">College</h3>
                   <p className="text-muted-foreground">
-                    {colleges.find(c => c.collegeid === profile.collegeid)?.name || "Loading..."}
-                    {colleges.find(c => c.collegeid === profile.collegeid)?.city && 
-                      ` - ${colleges.find(c => c.collegeid === profile.collegeid)?.city}`}
+                    {collegeName}
                   </p>
                 </div>
               )}
