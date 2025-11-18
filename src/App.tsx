@@ -11,6 +11,7 @@ import { Dashboard } from "./components/Dashboard";
 import { ProfilePage } from "./components/ProfilePage";
 import { TeamsPage } from "./components/TeamsPage";
 import { MessagesPage } from "./components/MessagesPage";
+import { FriendsPage } from "./components/FriendsPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import EventsPage from "./components/Events"; // ✅ fixed import
 import NotFound from "./pages/NotFound";
@@ -38,14 +39,7 @@ const App = () => (
             <Route path="/signup" element={<SignupPage />} />
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route
-                path="/friends"
-                element={
-                  <div className="p-8 text-center text-muted-foreground">
-                    Friends page coming soon...
-                  </div>
-                }
-              />
+              <Route path="/friends" element={<FriendsPage />} />
               <Route path="/teams" element={<TeamsPage />} />
               <Route path="/events" element={<EventsPage />} /> {/* ✅ fixed usage */}
               <Route path="/messages" element={<MessagesPage />} />
