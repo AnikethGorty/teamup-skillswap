@@ -4,12 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
+import { isEmailAllowed, ALLOWED_EMAILS } from "@/lib/allowedEmails";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").refine(
+    (email) => isEmailAllowed(email),
+    { message: "This email is not in our approved list. Please use one of the mock student emails." }
+  ),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -86,6 +91,24 @@ export function LoginPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Info Alert about allowed emails */}
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                <strong>Demo Mode:</strong> Only pre-registered student emails are allowed. 
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-primary hover:underline">
+                    View allowed emails
+                  </summary>
+                  <ul className="mt-2 text-xs space-y-1 max-h-32 overflow-y-auto">
+                    {ALLOWED_EMAILS.map(email => (
+                      <li key={email} className="font-mono">{email}</li>
+                    ))}
+                  </ul>
+                </details>
+              </AlertDescription>
+            </Alert>
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
