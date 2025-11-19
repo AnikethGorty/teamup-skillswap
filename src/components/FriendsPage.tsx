@@ -58,33 +58,51 @@ export function FriendsPage() {
       setMyProfile(profile);
 
       if (profile) {
-        // Get suggestions from same college
-        const { data: students } = await supabase
-          .from("studentdetails")
-          .select("*")
-          .eq("college_id", profile.college_id)
-          .neq("user_id", user!.id);
-
-        // Get existing friend relationships
-        const { data: friendships } = await supabase
-          .from("friends")
-          .select("*")
-          .or(`user_id.eq.${user!.id},friend_id.eq.${user!.id}`);
-
-        const friendIds = new Set(
-          friendships?.flatMap(f => [f.user_id, f.friend_id]) || []
+        // Use AI to get semantically similar students
+        const { data: aiData, error: aiError } = await supabase.functions.invoke(
+          'find-similar-students',
+          {
+            body: { 
+              userId: user!.id,
+              collegeId: profile.college_id 
+            }
+          }
         );
 
-        // Filter out existing friends and sort
-        const filtered = students?.filter(s => !friendIds.has(s.user_id)) || [];
-        const sorted = filtered.sort((a, b) => {
-          // Same year first
-          if (a.year === profile.year && b.year !== profile.year) return -1;
-          if (a.year !== profile.year && b.year === profile.year) return 1;
-          return 0;
-        });
+        if (aiError) {
+          console.error('AI matching error:', aiError);
+          toast({
+            title: "Error",
+            description: "Failed to load AI-powered suggestions. Showing basic suggestions.",
+            variant: "destructive",
+          });
+          
+          // Fallback to basic sorting
+          const { data: students } = await supabase
+            .from("studentdetails")
+            .select("*")
+            .eq("college_id", profile.college_id)
+            .neq("user_id", user!.id);
 
-        setSuggestions(sorted);
+          const { data: friendships } = await supabase
+            .from("friends")
+            .select("*")
+            .or(`user_id.eq.${user!.id},friend_id.eq.${user!.id}`);
+
+          const friendIds = new Set(
+            friendships?.flatMap(f => [f.user_id, f.friend_id]) || []
+          );
+
+          const filtered = students?.filter(s => !friendIds.has(s.user_id)) || [];
+          const sorted = filtered.sort((a, b) => {
+            if (a.year === profile.year && b.year !== profile.year) return -1;
+            if (a.year !== profile.year && b.year === profile.year) return 1;
+            return 0;
+          });
+          setSuggestions(sorted);
+        } else {
+          setSuggestions(aiData?.rankedStudents || []);
+        }
 
         // Load friends (accepted) with their details
         const { data: acceptedFriends } = await supabase
