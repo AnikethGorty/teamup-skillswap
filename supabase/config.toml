@@ -1,1 +1,4 @@
 project_id = "xigbfegjypshvyecccsy"
+
+[functions.find-similar-students]
+verify_jwt = true
