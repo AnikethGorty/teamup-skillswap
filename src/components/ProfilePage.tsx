@@ -72,7 +72,7 @@ export function ProfilePage() {
         setCollegeName(collegeNameValue);
         setFormData({
           name: data.name || "",
-          skills: [],
+          skills: data.skills || [],
           collegeName: collegeNameValue,
         });
       }
@@ -135,13 +135,18 @@ export function ProfilePage() {
         name: formData.name.trim(),
         email: user.email || "",
         college_id: collegeId,
+        skills: formData.skills,
       };
 
       if (profile) {
         // Update existing profile
         const { error } = await supabase
           .from('studentdetails')
-          .update({ name: profileData.name, college_id: profileData.college_id })
+          .update({ 
+            name: profileData.name, 
+            college_id: profileData.college_id,
+            skills: profileData.skills 
+          })
           .eq('user_id', user.id);
 
         if (error) throw error;

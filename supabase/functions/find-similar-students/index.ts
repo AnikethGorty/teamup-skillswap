@@ -58,19 +58,23 @@ serve(async (req) => {
     const availableStudents = students.filter(s => !friendIds.has(s.user_id));
 
     // Use AI to rank students by similarity
+    const mySkills = myProfile.skills || [];
     const prompt = `You are a matching system. Given a student profile and a list of other students, rank the students by similarity based on their branch, skills, and interests.
 
 My Profile:
 - Branch: ${myProfile.branch || 'Not specified'}
 - Year: ${myProfile.year || 'Not specified'}
+- Skills: ${mySkills.length > 0 ? mySkills.join(', ') : 'Not specified'}
 
 Other Students:
-${availableStudents.map((s, i) => `${i}. Branch: ${s.branch || 'Not specified'}, Year: ${s.year || 'Not specified'}`).join('\n')}
+${availableStudents.map((s, i) => `${i}. Branch: ${s.branch || 'Not specified'}, Year: ${s.year || 'Not specified'}, Skills: ${s.skills && s.skills.length > 0 ? s.skills.join(', ') : 'Not specified'}`).join('\n')}
 
-Rank these students by similarity considering:
-1. Semantic similarity of branches (e.g., "Computer Science" and "Software Engineering" are very similar)
-2. Same year gets priority
-3. Related fields (e.g., "Engineering" and "Computer Engineering" are related)
+Rank these students by similarity considering (in order of priority):
+1. Matching skills (e.g., if I have "C/C++" and they have "C/C++", prioritize them highly)
+2. Semantic similarity of skills (e.g., "C/C++" and "C Programming" are very similar)
+3. Same year gets bonus points
+4. Semantic similarity of branches (e.g., "Computer Science" and "Software Engineering" are very similar)
+5. Related fields (e.g., "Engineering" and "Computer Engineering" are related)
 
 Return ONLY a JSON array of student indices (0-based) in order from most to least similar. Format: [index1, index2, ...]`;
 

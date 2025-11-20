@@ -16,6 +16,15 @@ export const ALLOWED_EMAILS = [
   'nikhil.verma@mockstudent.edu',
   'aarav.chatterjee@mockstudent.edu',
   'diya.sinha@mockstudent.edu',
+  // MVJ College of Engineering Students
+  'arjun.mvj@mockstudent.edu',
+  'priya.mvj@mockstudent.edu',
+  'rohan.mvj@mockstudent.edu',
+  'sneha.mvj@mockstudent.edu',
+  'vikram.mvj@mockstudent.edu',
+  'anjali.mvj@mockstudent.edu',
+  'karthik.mvj@mockstudent.edu',
+  'divya.mvj@mockstudent.edu',
 ] as const;
 
 export function isEmailAllowed(email: string): boolean {
