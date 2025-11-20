@@ -48,6 +48,7 @@ export type Database = {
           max_participants: number | null
           name: string
           registration_deadline: string | null
+          required_skills: string[] | null
           status: string | null
         }
         Insert: {
@@ -62,6 +63,7 @@ export type Database = {
           max_participants?: number | null
           name: string
           registration_deadline?: string | null
+          required_skills?: string[] | null
           status?: string | null
         }
         Update: {
@@ -76,6 +78,7 @@ export type Database = {
           max_participants?: number | null
           name?: string
           registration_deadline?: string | null
+          required_skills?: string[] | null
           status?: string | null
         }
         Relationships: []
@@ -112,6 +115,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          skills: string[] | null
           user_id: string
           year: number | null
         }
@@ -122,6 +126,7 @@ export type Database = {
           email: string
           id?: string
           name: string
+          skills?: string[] | null
           user_id: string
           year?: number | null
         }
@@ -132,6 +137,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          skills?: string[] | null
           user_id?: string
           year?: number | null
         }
